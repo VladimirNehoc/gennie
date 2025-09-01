@@ -19,24 +19,22 @@ export class PromptDto implements IPrompt {
     example: "/uploads/previews/anime-portrait.jpg",
     nullable: true,
   })
-  previewUrl?: string | null;
+  beforeUrl?: string | null;
+
+  @ApiPropertyOptional({
+    example: "/uploads/previews/anime-portrait.jpg",
+    nullable: true,
+  })
+  afterUrl?: string | null;
 
   @ApiProperty({ enum: PromptType })
   type!: PromptType;
 
   @ApiProperty({
-    type: "object",
-    description: "Конфигурация шаблона",
-    example: {
-      hiddenPrompt: "anime style, soft light",
-      width: 768,
-      height: 1024,
-    },
+    type: "string",
+    description: "Текст промпта",
   })
-  config!: Record<string, any>;
-
-  @ApiProperty({ example: false })
-  isPremium!: boolean;
+  text!: string;
 
   @ApiProperty({
     type: String,
@@ -44,4 +42,11 @@ export class PromptDto implements IPrompt {
     example: "2025-08-27T12:34:56.000Z",
   })
   createdAt!: Date;
+
+  @ApiProperty({
+    type: String,
+    format: "date-time",
+    example: "2025-08-27T12:34:56.000Z",
+  })
+  updatedAt!: Date;
 }
