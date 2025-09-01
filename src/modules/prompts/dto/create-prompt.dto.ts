@@ -20,11 +20,15 @@ export class CreatePromptDto {
   @IsString()
   description?: string;
 
-  // Если хочешь строго проверять URL, замени на IsUrl({ require_tld: false })
   @ApiPropertyOptional({ example: "/uploads/previews/anime-portrait.jpg" })
   @IsOptional()
   @IsString()
-  previewUrl?: string;
+  beforeUrl?: string;
+
+  @ApiPropertyOptional({ example: "/uploads/previews/anime-portrait.jpg" })
+  @IsOptional()
+  @IsString()
+  afterUrl?: string;
 
   @ApiProperty({
     enum: PromptType,
@@ -34,19 +38,9 @@ export class CreatePromptDto {
   type: PromptType = PromptType.ImageToImage;
 
   @ApiProperty({
-    type: "object",
-    description: "Произвольная конфигурация шаблона",
-    example: {
-      hiddenPrompt: "anime style, soft light",
-      width: 768,
-      height: 1024,
-    },
+    type: "text",
+    description: "промпт шаблона",
   })
   @IsObject()
-  config: Record<string, any> = {};
-
-  @ApiPropertyOptional({ example: false, default: false })
-  @IsOptional()
-  @IsBoolean()
-  isPremium?: boolean = false;
+  text: Record<string, any> = {};
 }

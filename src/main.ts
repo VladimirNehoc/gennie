@@ -3,9 +3,16 @@ import { AppModule } from "./app.module";
 import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Security & CORS
+  app.use(helmet());
+  const corsOriginEnv = process.env.CORS_ORIGIN;
+  const origins = corsOriginEnv ? corsOriginEnv.split(",").map((s) => s.trim()) : true;
+  app.enableCors({ origin: origins, credentials: true });
 
   // Глобальные настройки
   app.use(cookieParser());

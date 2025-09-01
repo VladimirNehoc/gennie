@@ -23,6 +23,9 @@ export class User {
   @Column({ type: "enum", enum: UserRole, default: UserRole.User })
   role: UserRole;
 
+  @Column({ default: 0 })
+  credits: number;
+
   @Column({ default: true })
   isActive: boolean;
 
