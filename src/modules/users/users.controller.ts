@@ -18,10 +18,10 @@ import {
 import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
-import { UserDto } from "@lib/dto/models/user.dto";
-import { Roles } from "@lib/decorators/user-roles.decorator";
-import { RolesGuard } from "@lib/guards/user-roles.guard";
-import { UserRole } from "@lib/enums/user-role.enum";
+import { UserDto } from "src/modules/users/dto/user.dto";
+import { Roles } from "src/modules/users/user-roles.decorator";
+import { RolesGuard } from "src/modules/users/user-roles.guard";
+import { UserRole } from "src/modules/users/types/user-role.enum";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @ApiTags("users")

@@ -1,41 +1,30 @@
-import { PromptType } from "@lib/enums/prompt-type.enum";
-import { IPrompt } from "@lib/interfaces/prompt";
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  RelationId,
-} from "typeorm";
+import { PromptType } from "src/modules/prompts/types/prompt-type.enum";
+import { IPrompt } from "./types/prompt.interface";
+import { Entity, Column, ManyToOne, JoinColumn } from "typeorm";
 import { FileEntity } from "../files/files.entity";
+import { BaseEntity } from "src/common/base/base.entity";
 
 @Entity("prompts")
-export class Prompt implements IPrompt {
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
-
+export class Prompt extends BaseEntity implements IPrompt {
   @Column()
   title: string;
 
-  @Column({ type: "text", nullable: true })
-  description: string | null;
+  @Column({ type: "text" })
+  description: string;
 
-  @Column({ type: "uuid", nullable: true })
-  beforeImageId: string | null;
+  @Column({ type: "uuid" })
+  beforeImageId: string;
 
-  @ManyToOne(() => FileEntity, { nullable: true, onDelete: "SET NULL" })
+  @ManyToOne(() => FileEntity, { onDelete: "CASCADE" })
   @JoinColumn({ name: "beforeImageId" })
-  beforeImage?: FileEntity | null;
+  beforeImage: FileEntity;
 
-  @Column({ type: "uuid", nullable: true })
-  afterImageId: string | null;
+  @Column({ type: "uuid" })
+  afterImageId: string;
 
-  @ManyToOne(() => FileEntity, { nullable: true, onDelete: "SET NULL" })
+  @ManyToOne(() => FileEntity, { onDelete: "CASCADE" })
   @JoinColumn({ name: "afterImageId" })
-  afterImage?: FileEntity | null;
+  afterImage: FileEntity;
 
   @Column({
     type: "enum",
@@ -46,10 +35,4 @@ export class Prompt implements IPrompt {
 
   @Column({ type: "text", default: "" })
   text: string;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

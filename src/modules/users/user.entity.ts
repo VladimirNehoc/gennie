@@ -1,18 +1,10 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from "typeorm";
-import { UserRole } from "@lib/enums/user-role.enum";
+import { Entity, Column, Index } from "typeorm";
+import { UserRole } from "src/modules/users/types/user-role.enum";
+import { BaseEntity } from "src/common/base/base.entity";
+import { IUser } from "./types/user.interface";
 
 @Entity("users")
-export class User {
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
-
+export class User extends BaseEntity implements IUser {
   @Index({ unique: true })
   @Column()
   email: string;
@@ -28,10 +20,4 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

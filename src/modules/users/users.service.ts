@@ -9,13 +9,13 @@ import { Repository } from "typeorm";
 import { User } from "./user.entity";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
-import { UserRole } from "@lib/enums/user-role.enum";
+import { UserRole } from "./types/user-role.enum";
 import * as bcrypt from "bcryptjs";
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private readonly repo: Repository<User>
+    @InjectRepository(User) private readonly repository: Repository<User>
   ) {}
 
   async create(dto: CreateUserDto, actorRole?: UserRole) {
@@ -23,33 +23,35 @@ export class UsersService {
     const role =
       actorRole === UserRole.Admin ? dto.role ?? UserRole.User : UserRole.User;
 
-    const exists = await this.repo.findOne({ where: { email: dto.email } });
+    const exists = await this.repository.findOne({
+      where: { email: dto.email },
+    });
     if (exists) throw new ConflictException("Email already in use");
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = this.repo.create({
+    const user = this.repository.create({
       email: dto.email,
       passwordHash,
       role,
       isActive: dto.isActive ?? true,
     });
-    const saved = await this.repo.save(user);
+    const saved = await this.repository.save(user);
     return this.stripPassword(saved);
   }
 
   async findAll() {
-    const users = await this.repo.find({ order: { createdAt: "DESC" } });
+    const users = await this.repository.find({ order: { createdAt: "DESC" } });
     return users.map(this.stripPassword);
   }
 
   async findById(id: string) {
-    const user = await this.repo.findOne({ where: { id } });
+    const user = await this.repository.findOne({ where: { id } });
     if (!user) throw new NotFoundException("User not found");
     return this.stripPassword(user);
   }
 
   async findByEmail(email: string) {
-    return this.repo.findOne({ where: { email } });
+    return this.repository.findOne({ where: { email } });
   }
 
   async update(
@@ -57,7 +59,7 @@ export class UsersService {
     dto: UpdateUserDto,
     actor: { id: string; role: UserRole }
   ) {
-    const user = await this.repo.findOne({ where: { id } });
+    const user = await this.repository.findOne({ where: { id } });
     if (!user) throw new NotFoundException("User not found");
 
     // Только админ может менять роль / isActive и чужие аккаунты
@@ -80,14 +82,14 @@ export class UsersService {
     if (isAdmin && dto.role !== undefined) user.role = dto.role!;
     if (isAdmin && dto.isActive !== undefined) user.isActive = dto.isActive!;
 
-    const saved = await this.repo.save(user);
+    const saved = await this.repository.save(user);
     return this.stripPassword(saved);
   }
 
   async remove(id: string) {
-    const user = await this.repo.findOne({ where: { id } });
+    const user = await this.repository.findOne({ where: { id } });
     if (!user) throw new NotFoundException("User not found");
-    await this.repo.remove(user);
+    await this.repository.remove(user);
     return { id, removed: true };
   }
 

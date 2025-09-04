@@ -7,9 +7,10 @@ import {
   IsOptional,
   IsString,
 } from "class-validator";
-import { PromptType } from "@lib/enums/prompt-type.enum";
+import { PromptType } from "src/modules/prompts/types/prompt-type.enum";
+import { IPromptCreate } from "../types/prompt-mutations.interface";
 
-export class CreatePromptDto {
+export class CreatePromptDto implements IPromptCreate {
   @ApiProperty({ example: "Аниме-портрет" })
   @IsString()
   @IsNotEmpty()
@@ -18,17 +19,17 @@ export class CreatePromptDto {
   @ApiPropertyOptional({ example: "Мягкое освещение, крупный план" })
   @IsOptional()
   @IsString()
-  description?: string;
+  description!: string;
 
   @ApiPropertyOptional({ example: "/uploads/previews/anime-portrait.jpg" })
   @IsOptional()
   @IsString()
-  beforeUrl?: string;
+  beforeImageId!: string;
 
   @ApiPropertyOptional({ example: "/uploads/previews/anime-portrait.jpg" })
   @IsOptional()
   @IsString()
-  afterUrl?: string;
+  afterImageId!: string;
 
   @ApiProperty({
     enum: PromptType,
@@ -41,6 +42,6 @@ export class CreatePromptDto {
     type: "text",
     description: "промпт шаблона",
   })
-  @IsObject()
-  text: Record<string, any> = {};
+  @IsString()
+  text: string;
 }

@@ -13,9 +13,6 @@
     "strictPropertyInitialization": false,
 
     "baseUrl": ".",
-    "paths": {
-      "@lib/*": ["src/lib/*"]
-    },
     "rootDir": "./src",
     "outDir": "./dist",
 

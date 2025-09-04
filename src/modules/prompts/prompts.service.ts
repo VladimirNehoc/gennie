@@ -3,16 +3,19 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Prompt } from "./prompt.entity";
 import { FindPromptsDto } from "./dto/find-prompts.dto";
+import { CreatePromptDto } from "./dto/create-prompt.dto";
+import { PaginationResult } from "src/common/pagination/pagination.interface";
+import { paginate } from "src/common/pagination/pagination.util";
 
 @Injectable()
 export class PromptsService {
   constructor(
     @InjectRepository(Prompt)
-    private repo: Repository<Prompt>
+    protected repository: Repository<Prompt>
   ) {}
 
   findAll() {
-    return this.repo.find({
+    return this.repository.find({
       select: [
         "id",
         "title",
@@ -25,42 +28,46 @@ export class PromptsService {
   }
 
   async findOne(id: string) {
-    const prompt = await this.repo.findOne({ where: { id } });
+    const prompt = await this.repository.findOne({ where: { id } });
     if (!prompt) throw new NotFoundException("Prompt not found");
     return prompt;
   }
 
-  async findMany(dto: FindPromptsDto) {
-    const { page = 1, limit = 20, title, description } = dto;
+  async findMany(query: FindPromptsDto): Promise<PaginationResult<Prompt>> {
+    return paginate<Prompt>(
+      this.repository,
+      query,
+      "prompt",
+      (queryBuilder) => {
+        queryBuilder.distinct(true);
 
-    const qb = this.repo
-      .createQueryBuilder("p")
-      .orderBy("p.createdAt", "DESC")
-      .skip((page - 1) * limit)
-      .take(limit);
+        // Поиск по названию и описанию
+        if (query.search) {
+          queryBuilder.andWhere(
+            "(prompt.title ILIKE :search OR prompt.description ILIKE :search)",
+            { search: `%${query.search}%` }
+          );
+        }
 
-    if (title) qb.andWhere("p.title ILIKE :title", { title: `%${title}%` });
-    if (description)
-      qb.andWhere("p.description ILIKE :desc", { desc: `%${description}%` });
-
-    const [items, total] = await qb.getManyAndCount();
-
-    return { items, total, page, limit };
+        // Сортировка по дате создания: новые сверху
+        queryBuilder.orderBy("prompt.createdAt", "DESC");
+      }
+    );
   }
 
-  async create(data: Partial<Prompt>) {
-    const prompt = this.repo.create(data);
-    return this.repo.save(prompt);
+  async create(data: CreatePromptDto) {
+    const prompt = this.repository.create(data);
+    return this.repository.save(prompt);
   }
 
   async update(id: string, data: Partial<Prompt>) {
     const prompt = await this.findOne(id);
     Object.assign(prompt, data);
-    return this.repo.save(prompt);
+    return this.repository.save(prompt);
   }
 
   async remove(id: string) {
     const prompt = await this.findOne(id);
-    return this.repo.remove(prompt);
+    return this.repository.remove(prompt);
   }
 }
