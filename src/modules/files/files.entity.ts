@@ -1,16 +1,9 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  PrimaryGeneratedColumn,
-} from "typeorm";
+import { BaseEntity } from "src/common/base/base.entity";
+import { Column, Entity, Index } from "typeorm";
+import { IFile } from "./types/file.interface";
 
 @Entity("files")
-export class FileEntity {
-  @PrimaryGeneratedColumn("uuid")
-  id!: string;
-
+export class FileEntity extends BaseEntity implements IFile {
   @Column({ length: 255 })
   bucket!: string;
 
@@ -33,7 +26,4 @@ export class FileEntity {
 
   @Column({ type: "jsonb", nullable: true })
   meta!: Record<string, any> | null;
-
-  @CreateDateColumn()
-  createdAt!: Date;
 }

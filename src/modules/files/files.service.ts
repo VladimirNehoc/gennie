@@ -12,6 +12,7 @@ import { randomUUID } from "crypto";
 import { ConfigService } from "@nestjs/config";
 import { FileEntity } from "./files.entity";
 import { S3_CLIENT } from "./s3.module";
+import { DeleteFileResponseDto } from "./dto/delete-file-response.dto";
 
 type UploadOpts = {
   folder?: string;
@@ -94,14 +95,22 @@ export class FilesService {
     return getSignedUrl(this.s3, cmd, { expiresIn: expiresSec });
   }
 
-  async removeById(id: string) {
-    const f = await this.repo.findOne({ where: { id } });
-    if (!f) throw new NotFoundException("File not found");
+  async removeById(fileId: string): Promise<DeleteFileResponseDto> {
+    const fileEntity = await this.repo.findOne({ where: { id: fileId } });
+    if (!fileEntity) {
+      throw new NotFoundException("File not found");
+    }
+
     await this.s3.send(
-      new DeleteObjectCommand({ Bucket: f.bucket, Key: f.key })
+      new DeleteObjectCommand({
+        Bucket: fileEntity.bucket,
+        Key: fileEntity.key,
+      })
     );
-    await this.repo.delete({ id: f.id });
-    return { ok: true, id };
+
+    await this.repo.delete({ id: fileEntity.id });
+
+    return { ok: true, id: fileEntity.id };
   }
 
   async getMeta(id: string) {

@@ -9,10 +9,11 @@ import {
   UseGuards,
   Query,
   HttpCode,
+  ParseUUIDPipe,
 } from "@nestjs/common";
 import { PromptsService } from "./prompts.service";
 import { Prompt } from "./prompt.entity";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "src/modules/users/user-roles.guard";
 import { UserRole } from "src/modules/users/types/user-role.enum";
@@ -28,18 +29,34 @@ export class PromptsController {
   constructor(private readonly promptsService: PromptsService) {}
 
   @Get()
+  @ApiOperation({
+    summary: "Получить список промптов с фильтрами и пагинацией",
+  })
+  @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
+  @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
+  @ApiQuery({ name: "search", required: false, type: String, example: "face" })
+  @ApiResponse({
+    status: 200,
+    description: "Список промптов с мета-данными",
+    type: Object,
+  })
   findMany(@Query() query: FindPromptsDto): Promise<PaginationResult<IPrompt>> {
     return this.promptsService.findMany(query);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string): Promise<IPrompt> {
+  @ApiOperation({ summary: "Получить один промпт по id" })
+  @ApiResponse({ status: 200, description: "Найденный промпт", type: Prompt })
+  @ApiResponse({ status: 404, description: "Промпт не найден" })
+  findOne(@Param("id", ParseUUIDPipe) id: string): Promise<IPrompt> {
     return this.promptsService.findOne(id);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.Admin)
+  @ApiOperation({ summary: "Создать новый промпт (только админ)" })
+  @ApiResponse({ status: 201, description: "Промпт создан", type: Prompt })
   create(@Body() dto: CreatePromptDto): Promise<IPrompt> {
     return this.promptsService.create(dto);
   }
@@ -47,8 +64,11 @@ export class PromptsController {
   @Patch(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.Admin)
+  @ApiOperation({ summary: "Обновить промпт (только админ)" })
+  @ApiResponse({ status: 200, description: "Обновлённый промпт", type: Prompt })
+  @ApiResponse({ status: 404, description: "Промпт не найден" })
   update(
-    @Param("id") id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: Partial<Prompt>
   ): Promise<IPrompt> {
     return this.promptsService.update(id, dto);
@@ -58,7 +78,10 @@ export class PromptsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.Admin)
   @HttpCode(204)
-  async remove(@Param("id") id: string): Promise<void> {
+  @ApiOperation({ summary: "Удалить промпт (только админ)" })
+  @ApiResponse({ status: 204, description: "Промпт удалён" })
+  @ApiResponse({ status: 404, description: "Промпт не найден" })
+  async remove(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
     await this.promptsService.remove(id);
   }
 }

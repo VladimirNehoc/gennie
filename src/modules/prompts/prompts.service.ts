@@ -6,6 +6,7 @@ import { FindPromptsDto } from "./dto/find-prompts.dto";
 import { CreatePromptDto } from "./dto/create-prompt.dto";
 import { PaginationResult } from "src/common/pagination/pagination.interface";
 import { paginate } from "src/common/pagination/pagination.util";
+import { IPrompt } from "./types/prompt.interface";
 
 @Injectable()
 export class PromptsService {
@@ -14,7 +15,7 @@ export class PromptsService {
     protected repository: Repository<Prompt>
   ) {}
 
-  findAll() {
+  findAll(): Promise<IPrompt[]> {
     return this.repository.find({
       select: [
         "id",
@@ -33,7 +34,7 @@ export class PromptsService {
     return prompt;
   }
 
-  async findMany(query: FindPromptsDto): Promise<PaginationResult<Prompt>> {
+  async findMany(query: FindPromptsDto): Promise<PaginationResult<IPrompt>> {
     return paginate<Prompt>(
       this.repository,
       query,
@@ -55,12 +56,12 @@ export class PromptsService {
     );
   }
 
-  async create(data: CreatePromptDto) {
+  async create(data: CreatePromptDto): Promise<IPrompt> {
     const prompt = this.repository.create(data);
     return this.repository.save(prompt);
   }
 
-  async update(id: string, data: Partial<Prompt>) {
+  async update(id: string, data: Partial<Prompt>): Promise<IPrompt> {
     const prompt = await this.findOne(id);
     Object.assign(prompt, data);
     return this.repository.save(prompt);

@@ -9,27 +9,40 @@ import {
   UploadedFile,
   UseInterceptors,
   UseGuards,
+  NotFoundException,
 } from "@nestjs/common";
 // если используешь аутентификацию — добавь Guard/достань userId из req.user
 import { FileInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
 import { FilesService } from "./files.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { ApiBody, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { UploadDto } from "./dto/upload.dto";
+import { IFile } from "./types/file.interface";
+import { UploadFileResponseDto } from "./dto/upload-file-response.dto";
+import { DeleteFileResponseDto } from "./dto/delete-file-response.dto";
+import { FileDto } from "./dto/file.dto";
 
 @Controller("files")
 export class FilesController {
-  constructor(private readonly files: FilesService) {}
+  constructor(private readonly filesService: FilesService) {}
 
   @Post("upload")
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor("file", { storage: memoryStorage() }))
+  @ApiBody({ type: UploadDto })
+  @ApiResponse({
+    status: 201,
+    description: "Файл успешно загружен",
+    type: UploadFileResponseDto,
+  })
   async upload(
     @UploadedFile() file: Express.Multer.File,
     @Query("folder") folder?: string,
     @Query("public") publicQ?: string
-  ) {
+  ): Promise<UploadFileResponseDto> {
     if (!file) throw new BadRequestException("No file");
-    const saved = await this.files.uploadBuffer(
+    const saved = await this.filesService.uploadBuffer(
       {
         buffer: file.buffer,
         originalname: file.originalname,
@@ -45,7 +58,7 @@ export class FilesController {
 
     const signedUrl = saved.url
       ? null
-      : await this.files.getSignedGetUrl(saved.key, 3600);
+      : await this.filesService.getSignedGetUrl(saved.key, 3600);
     return {
       id: saved.id,
       key: saved.key,
@@ -57,19 +70,36 @@ export class FilesController {
   }
 
   @Get(":id")
-  async getOne(@Param("id") id: string, @Query("signed") signed?: string) {
-    const meta = await this.files.getMeta(id);
-    const url =
-      signed === "true" || !meta.url
-        ? await this.files.getSignedGetUrl(meta.key, 3600)
-        : meta.url;
+  @ApiOperation({ summary: "Получить метаданные файла" })
+  @ApiResponse({ status: 200, type: FileDto })
+  @ApiResponse({ status: 404, description: "Файл не найден" })
+  async getOne(
+    @Param("id") fileId: string,
+    @Query("signed") signed?: string
+  ): Promise<FileDto> {
+    const fileMeta = await this.filesService.getMeta(fileId);
+    if (!fileMeta) {
+      throw new NotFoundException("File not found");
+    }
 
-    return { ...meta, url };
+    const fileUrl =
+      signed === "true" || !fileMeta.url
+        ? await this.filesService.getSignedGetUrl(fileMeta.key, 3600)
+        : fileMeta.url;
+
+    return { ...fileMeta, url: fileUrl };
   }
 
   @Delete(":id")
   @UseGuards(JwtAuthGuard)
-  async remove(@Param("id") id: string) {
-    return this.files.removeById(id);
+  @ApiOperation({ summary: "Удалить файл по ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Файл удалён",
+    type: DeleteFileResponseDto,
+  })
+  @ApiResponse({ status: 404, description: "Файл не найден" })
+  async remove(@Param("id") fileId: string): Promise<DeleteFileResponseDto> {
+    return this.filesService.removeById(fileId);
   }
 }
